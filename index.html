@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SecureID – Digital Identity Management System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #D4AF37;
+      --gold-light: #F0D060;
+      --gold-dark: #A8880E;
+      --black: #0A0A0A;
+      --black-2: #111111;
+      --black-3: #1A1A1A;
+      --green: #00C853;
+      --green-dark: #00A844;
+      --green-dim: #00401A;
+      --text: #E8E8E8;
+      --text-muted: #888;
+      --border: rgba(212,175,55,0.25);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* GRID BG */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(212,175,55,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,175,55,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* NAV */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.92);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 48px;
+      height: 64px;
+    }
+    .nav-logo {
+      font-family: 'Cinzel', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 2px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .nav-logo .shield {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .nav-links {
+      display: flex;
+      gap: 36px;
+      list-style: none;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-cta {
+      display: flex;
+      gap: 12px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 22px;
+      border-radius: 3px;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      cursor: pointer;
+      border: none;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+    }
+    .btn-outline:hover {
+      background: var(--gold);
+      color: var(--black);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      color: var(--black);
+    }
+    .btn-primary:hover {
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px rgba(212,175,55,0.3);
+    }
+    .btn-green {
+      background: linear-gradient(135deg, var(--green), var(--green-dark));
+      color: var(--black);
+    }
+    .btn-green:hover {
+      background: linear-gradient(135deg, #00FF6A, var(--green));
+      box-shadow: 0 4px 20px rgba(0,200,83,0.3);
+      transform: translateY(-1px);
+    }
+
+    /* HERO */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      z-index: 1;
+    }
+    .hero-glow {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(212,175,55,0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.3);
+      color: var(--green);
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: fadeInDown 0.8s ease both;
+    }
+    .hero-badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      background: var(--green);
+      border-radius: 50%;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.4); }
+    }
+    .hero h1 {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(2.8rem, 6vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.8s 0.2s ease both;
+    }
+    .hero h1 span {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      max-width: 600px;
+      margin: 0 auto 40px;
+      color: var(--text-muted);
+      font-size: 1.15rem;
+      font-weight: 400;
+      animation: fadeInUp 0.8s 0.4s ease both;
+    }
+    .hero-btns {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      animation: fadeInUp 0.8s 0.6s ease both;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* STATS BAR */
+    .stats-bar {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: rgba(212,175,55,0.04);
+      display: flex;
+      justify-content: center;
+      gap: 0;
+    }
+    .stat {
+      flex: 1;
+      max-width: 220px;
+      padding: 28px 24px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 4px;
+    }
+
+    /* SECTIONS */
+    section {
+      position: relative;
+      z-index: 1;
+      padding: 80px 24px;
+    }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--green);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--text);
+    }
+    .section-title span { color: var(--gold); }
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+      max-width: 560px;
+      margin-bottom: 52px;
+    }
+
+    /* FEATURES GRID */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .feature-card {
+      background: var(--black-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 28px;
+      transition: border-color 0.3s, transform 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .feature-card:hover { border-color: var(--gold); transform: translateY(-4px); }
+    .feature-card:hover::before { opacity: 1; }
+    .feature-icon {
+      width: 48px; height: 48px;
+      background: rgba(212,175,55,0.1);
+      border: 1px solid rgba(212,175,55,0.2);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      margin-bottom: 18px;
+    }
+    .feature-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1rem;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .feature-card p {
+      color: var(--text-muted);
+      font-size: 0.92rem;
+      line-height: 1.65;
+    }
+
+    /* HOW IT WORKS */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .step {
+      padding: 32px 24px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+    .step:last-child { border-right: none; }
+    .step-num {
+      font-family: 'Cinzel', serif;
+      font-size: 3rem;
+      font-weight: 900;
+      color: rgba(212,175,55,0.12);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .step-icon { font-size: 24px; margin-bottom: 14px; }
+    .step h4 {
+      font-family: 'Cinzel', serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .step p { color: var(--text-muted); font-size: 0.88rem; }
+    .step-arrow {
+      position: absolute;
+      top: 50%; right: -12px;
+      transform: translateY(-50%);
+      color: var(--gold);
+      font-size: 20px;
+      z-index: 2;
+    }
+    .step:last-child .step-arrow { display: none; }
+
+    /* ROLE CARDS */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .role-card {
+      background: var(--black-2);
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .role-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+    }
+    .role-header {
+      padding: 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .role-header.admin { background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(168,136,14,0.06)); }
+    .role-header.member { background: linear-gradient(135deg, rgba(0,200,83,0.1), rgba(0,64,26,0.06)); }
+    .role-icon { font-size: 36px; margin-bottom: 12px; }
+    .role-card h3 {
+      font-family: 'Cinzel', serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+    .role-header.admin h3 { color: var(--gold); }
+    .role-header.member h3 { color: var(--green); }
+    .role-card p { color: var(--text-muted); font-size: 0.9rem; margin-top: 6px; }
+    .role-body { padding: 24px 28px; }
+    .role-feature {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .role-feature:last-child { border-bottom: none; }
+    .role-feature .check { color: var(--green); font-size: 14px; flex-shrink: 0; }
+    .role-btn { display: block; margin: 20px 28px 28px; }
+
+    /* TERMINAL DEMO */
+    .terminal {
+      background: #0D0D0D;
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 8px;
+      overflow: hidden;
+      font-family: 'Share Tech Mono', monospace;
+      box-shadow: 0 0 40px rgba(0,200,83,0.05);
+    }
+    .terminal-bar {
+      background: #161616;
+      border-bottom: 1px solid rgba(0,200,83,0.15);
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .t-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .t-dot.red { background: #FF5F57; }
+    .t-dot.yellow { background: #FFBD2E; }
+    .t-dot.green { background: #28C840; }
+    .terminal-title { color: var(--text-muted); font-size: 0.8rem; margin-left: 8px; }
+    .terminal-body { padding: 24px; font-size: 0.85rem; line-height: 2; }
+    .t-cmd { color: var(--gold); }
+    .t-out { color: var(--text-muted); }
+    .t-success { color: var(--green); }
+    .t-warn { color: #FFB300; }
+    .t-key { color: #69D2E7; }
+    .t-val { color: #E8D44D; }
+    .t-prompt { color: var(--green-dark); }
+
+    /* SECURITY SECTION */
+    .security-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: center;
+    }
+    .security-list { list-style: none; }
+    .security-item {
+      display: flex;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .sec-icon {
+      width: 40px; height: 40px;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.2);
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .sec-text h4 { color: var(--gold); font-size: 0.95rem; margin-bottom: 4px; }
+    .sec-text p { color: var(--text-muted); font-size: 0.85rem; }
+
+    /* FOOTER */
+    footer {
+      position: relative;
+      z-index: 1;
+      background: var(--black-2);
+      border-top: 1px solid var(--border);
+      padding: 40px 24px;
+    }
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-logo {
+      font-family: 'Cinzel', serif;
+      color: var(--gold);
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+    }
+    .footer-links { display: flex; gap: 24px; }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--gold); }
+    .footer-copy { color: var(--text-muted); font-size: 0.8rem; }
+
+    /* DIVIDER */
+    .gold-divider {
+      width: 60px; height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--green));
+      margin-bottom: 20px;
+    }
+
+    /* SCROLL INDICATOR */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      animation: fadeInUp 1s 1s ease both;
+    }
+    .scroll-mouse {
+      width: 22px; height: 34px;
+      border: 2px solid rgba(212,175,55,0.4);
+      border-radius: 11px;
+      position: relative;
+    }
+    .scroll-mouse::after {
+      content: '';
+      position: absolute;
+      top: 5px; left: 50%; transform: translateX(-50%);
+      width: 3px; height: 7px;
+      background: var(--gold);
+      border-radius: 2px;
+      animation: scrollDown 1.5s infinite;
+    }
+    @keyframes scrollDown {
+      0% { top: 5px; opacity: 1; }
+      100% { top: 18px; opacity: 0; }
+    }
+
+    /* SECTION BG ACCENT */
+    .bg-accent { background: var(--black-2); }
+  </style>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <div class="shield">🛡</div>
+      SecureID
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#roles">Access Roles</a></li>
+      <li><a href="#security">Security</a></li>
+    </ul>
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-outline">Login</a>
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div>
+      <div class="hero-badge">System Active &amp; Secure</div>
+      <h1>Digital Identity<br><span>Management System</span></h1>
+      <p>Store, manage, and securely share your verified digital identity using encrypted tokens with real-time verification.</p>
+      <div class="hero-btns">
+        <a href="register.html" class="btn btn-primary" style="font-size:1rem; padding:14px 32px;">Get Started</a>
+        <a href="verify.html" class="btn btn-outline" style="font-size:1rem; padding:14px 32px;">Verify Identity</a>
+      </div>
+    </div>
+    <div class="scroll-indicator">
+      <div class="scroll-mouse"></div>
+      Scroll
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <div class="stats-bar">
+    <div class="stat"><div class="stat-num">256</div><div class="stat-label">Bit Encryption</div></div>
+    <div class="stat"><div class="stat-num">OTP</div><div class="stat-label">Verification Codes</div></div>
+    <div class="stat"><div class="stat-num">2</div><div class="stat-label">Access Roles</div></div>
+    <div class="stat"><div class="stat-num">bcrypt</div><div class="stat-label">Password Hashing</div></div>
+    <div class="stat"><div class="stat-num">GDPR</div><div class="stat-label">Compliant Design</div></div>
+  </div>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="container">
+      <div class="section-label">Platform Features</div>
+      <h2 class="section-title">Everything You Need for <span>Secure Identity</span></h2>
+      <div class="gold-divider"></div>
+      <p class="section-desc">A complete digital identity solution with modern authentication, controlled sharing, and instant verification.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>Secure Authentication</h3>
+          <p>bcrypt-hashed passwords, session-based login, and input validation protect every user account from unauthorized access.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👤</div>
+          <h3>Identity Dashboard</h3>
+          <p>Personal dashboard displaying your name, email, mock ID, and profile details with easy editing capability.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Secure Share Codes</h3>
+          <p>Generate cryptographically random 6-character codes to share your identity securely. Codes expire automatically.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">✅</div>
+          <h3>Identity Verification</h3>
+          <p>Third parties can verify your identity instantly using the share code. Invalid codes return a clear error response.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👑</div>
+          <h3>Admin Panel</h3>
+          <p>Administrators can view all registered users, manage identities, revoke codes, and monitor verification activity.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🕒</div>
+          <h3>Code Expiry Control</h3>
+          <p>Share codes have a configurable TTL (Time-To-Live). Expired codes are automatically invalidated for maximum security.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how-it-works" class="bg-accent">
+    <div class="container">
+      <div class="section-label">Process Flow</div>
+      <h2 class="section-title">How <span>SecureID</span> Works</h2>
+      <div class="gold-divider"></div>
+      <p class="section-desc">Four simple steps from registration to verified identity sharing.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <div class="step-icon">📝</div>
+          <h4>Register</h4>
+          <p>Create your account with name, email, and a strong password. Your password is hashed with bcrypt.</p>
+          <span class="step-arrow">›</span>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <div class="step-icon">🔑</div>
+          <h4>Login</h4>
+          <p>Authenticate securely. Session is created and maintained. Admin and Member roles are separated.</p>
+          <span class="step-arrow">›</span>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <div class="step-icon">🪪</div>
+          <h4>Store Identity</h4>
+          <p>Complete your profile with your Mock ID and other identity details on your personal dashboard.</p>
+          <span class="step-arrow">›</span>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <div class="step-icon">🔗</div>
+          <h4>Share &amp; Verify</h4>
+          <p>Generate a secure code to share. The recipient enters it on the Verify page to confirm your identity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ROLES -->
+  <section id="roles">
+    <div class="container">
+      <div class="section-label">Access Control</div>
+      <h2 class="section-title">Two <span>Distinct Roles</span></h2>
+      <div class="gold-divider"></div>
+      <p class="section-desc">SecureID differentiates between system administrators and regular members with distinct login portals and capabilities.</p>
+      <div class="roles-grid">
+        <div class="role-card">
+          <div class="role-header admin">
+            <div class="role-icon">👑</div>
+            <h3>Administrator</h3>
+            <p>Full system access and user management</p>
+          </div>
+          <div class="role-body">
+            <div class="role-feature"><span class="check">✔</span> View all registered users</div>
+            <div class="role-feature"><span class="check">✔</span> Manage user identities</div>
+            <div class="role-feature"><span class="check">✔</span> Revoke active share codes</div>
+            <div class="role-feature"><span class="check">✔</span> View verification logs</div>
+            <div class="role-feature"><span class="check">✔</span> System health monitoring</div>
+            <div class="role-feature"><span class="check">✔</span> Delete user accounts</div>
+          </div>
+          <a href="login.html?role=admin" class="btn btn-primary role-btn" style="text-align:center;">Admin Login →</a>
+        </div>
+        <div class="role-card">
+          <div class="role-header member">
+            <div class="role-icon">👤</div>
+            <h3>Member</h3>
+            <p>Personal identity storage and sharing</p>
+          </div>
+          <div class="role-body">
+            <div class="role-feature"><span class="check">✔</span> Personal identity dashboard</div>
+            <div class="role-feature"><span class="check">✔</span> Edit profile information</div>
+            <div class="role-feature"><span class="check">✔</span> Generate share codes</div>
+            <div class="role-feature"><span class="check">✔</span> Verify others' identity</div>
+            <div class="role-feature"><span class="check">✔</span> View active share sessions</div>
+            <div class="role-feature"><span class="check">✔</span> Update Mock ID / credentials</div>
+          </div>
+          <a href="login.html?role=member" class="btn btn-green role-btn" style="text-align:center;">Member Login →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TERMINAL DEMO -->
+  <section class="bg-accent">
+    <div class="container">
+      <div class="section-label">Live Demo Preview</div>
+      <h2 class="section-title">See <span>SecureID in Action</span></h2>
+      <div class="gold-divider"></div>
+      <div class="terminal">
+        <div class="terminal-bar">
+          <div class="t-dot red"></div>
+          <div class="t-dot yellow"></div>
+          <div class="t-dot green"></div>
+          <span class="terminal-title">secureid-system.js</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="t-prompt">$</span> <span class="t-cmd">POST /api/auth/register</span></div>
+          <div><span class="t-out">  → name: "John Doe"  email: "john@example.com"</span></div>
+          <div><span class="t-success">  ✔ User registered. Password hashed with bcrypt (salt rounds: 10)</span></div>
+          <br>
+          <div><span class="t-prompt">$</span> <span class="t-cmd">POST /api/auth/login</span></div>
+          <div><span class="t-out">  → role: "member"  email: "john@example.com"</span></div>
+          <div><span class="t-success">  ✔ Session created. Token: sess_7f3a...</span></div>
+          <br>
+          <div><span class="t-prompt">$</span> <span class="t-cmd">POST /api/identity/share</span></div>
+          <div><span class="t-key">  code: </span><span class="t-val">"XK9M2P"</span> <span class="t-out">expires_in: 30min</span></div>
+          <div><span class="t-success">  ✔ Share code generated. Store securely.</span></div>
+          <br>
+          <div><span class="t-prompt">$</span> <span class="t-cmd">GET /api/verify/XK9M2P</span></div>
+          <div><span class="t-key">  identity: </span><span class="t-val">{ name: "John Doe", mockId: "GOV-2025-4829", verified: true }</span></div>
+          <div><span class="t-success">  ✔ Identity verified successfully.</span></div>
+          <br>
+          <div><span class="t-warn">  ⚠ Production: Add AES-256 encryption, rate limiting, 2FA OTP here</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECURITY -->
+  <section id="security">
+    <div class="container">
+      <div class="security-grid">
+        <div>
+          <div class="section-label">Security Architecture</div>
+          <h2 class="section-title">Built with <span>Security</span> in Mind</h2>
+          <div class="gold-divider"></div>
+          <p class="section-desc" style="margin-bottom:0;">Prototype-level security with clear markers showing where production-grade measures belong.</p>
+        </div>
+        <ul class="security-list">
+          <li class="security-item">
+            <div class="sec-icon">🔒</div>
+            <div class="sec-text">
+              <h4>bcrypt Password Hashing</h4>
+              <p>All passwords are hashed with bcrypt before storage. Plain text is never stored.</p>
+            </div>
+          </li>
+          <li class="security-item">
+            <div class="sec-icon">🎲</div>
+            <div class="sec-text">
+              <h4>Cryptographic Share Codes</h4>
+              <p>Share codes use Math.random seeded generation — in production, use crypto.randomBytes().</p>
+            </div>
+          </li>
+          <li class="security-item">
+            <div class="sec-icon">⏱</div>
+            <div class="sec-text">
+              <h4>Code TTL Expiry</h4>
+              <p>Codes automatically expire after a set duration. Expired codes are rejected silently.</p>
+            </div>
+          </li>
+          <li class="security-item">
+            <div class="sec-icon">✔</div>
+            <div class="sec-text">
+              <h4>Input Validation</h4>
+              <p>All forms validate email format, password strength, and field presence before submission.</p>
+            </div>
+          </li>
+          <li class="security-item">
+            <div class="sec-icon">🧩</div>
+            <div class="sec-text">
+              <h4>Session Management</h4>
+              <p>Login state persisted via sessionStorage. In production, use secure HttpOnly cookies.</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">SecureID © 2025</div>
+      <div class="footer-links">
+        <a href="login.html">Login</a>
+        <a href="register.html">Register</a>
+        <a href="verify.html">Verify</a>
+      </div>
+      <div class="footer-copy">Prototype — Not for production use</div>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Verify Identity – SecureID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .verify-page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 80px 24px 40px;
+    }
+    .verify-container {
+      width: 100%; max-width: 560px;
+    }
+    .verify-header { text-align: center; margin-bottom: 36px; }
+    .verify-icon {
+      width: 72px; height: 72px;
+      background: linear-gradient(135deg, rgba(0,200,83,0.15), rgba(0,64,26,0.1));
+      border: 2px solid rgba(0,200,83,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      margin: 0 auto 20px;
+      animation: glowPulse 3s infinite;
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,83,0.2); }
+      50% { box-shadow: 0 0 20px 8px rgba(0,200,83,0.1); }
+    }
+    .verify-header h1 {
+      font-family: 'Cinzel', serif;
+      font-size: 2rem; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .verify-header h1 span { color: var(--green); }
+    .verify-header p { color: var(--text-muted); font-size: 1rem; }
+
+    /* CODE INPUT */
+    .code-input-row {
+      display: flex; gap: 10px;
+    }
+    .code-input {
+      flex: 1;
+      background: var(--black-3);
+      border: 2px solid rgba(0,200,83,0.25);
+      border-radius: 6px;
+      padding: 14px 18px;
+      color: var(--green);
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .code-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(0,200,83,0.15);
+    }
+    .code-input::placeholder { color: rgba(0,200,83,0.2); letter-spacing: 4px; font-size: 1.2rem; }
+    .verify-btn {
+      padding: 14px 24px;
+      white-space: nowrap;
+    }
+
+    /* RESULT CARD */
+    .result-card {
+      margin-top: 24px;
+      border-radius: 8px;
+      overflow: hidden;
+      display: none;
+      animation: fadeInUp 0.4s ease;
+    }
+    .result-card.show { display: block; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-success {
+      background: linear-gradient(135deg, rgba(0,200,83,0.06), rgba(0,64,26,0.04));
+      border: 1px solid rgba(0,200,83,0.3);
+    }
+    .result-error {
+      background: rgba(255,68,68,0.06);
+      border: 1px solid rgba(255,68,68,0.3);
+    }
+
+    .result-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .result-icon { font-size: 32px; }
+    .result-title { font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 700; }
+    .result-success .result-title { color: var(--green); }
+    .result-error .result-title { color: var(--red); }
+    .result-sub { color: var(--text-muted); font-size: 0.85rem; margin-top: 3px; }
+
+    .result-body { padding: 20px 24px; }
+    .id-row {
+      display: flex; align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      gap: 12px;
+    }
+    .id-row:last-child { border-bottom: none; }
+    .id-key {
+      font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); min-width: 120px;
+    }
+    .id-value { font-size: 0.95rem; font-weight: 600; color: var(--text); }
+    .id-value.highlight { color: var(--gold); font-family: 'Share Tech Mono', monospace; }
+    .id-value.green { color: var(--green); }
+
+    .result-footer {
+      padding: 14px 24px;
+      background: rgba(0,0,0,0.2);
+      font-size: 0.78rem; color: rgba(255,255,255,0.25);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .verified-stamp {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(0,200,83,0.1);
+      border: 1px solid rgba(0,200,83,0.25);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      color: var(--green);
+    }
+
+    /* BACK LINK */
+    .back-nav {
+      position: fixed;
+      top: 16px; left: 24px;
+      z-index: 101;
+    }
+
+    /* HOW TO BOX */
+    .how-to {
+      margin-top: 32px;
+      background: var(--black-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      font-size: 0.85rem;
+    }
+    .how-to-title {
+      font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--gold); margin-bottom: 12px; font-weight: 700;
+    }
+    .how-to-step { display: flex; gap: 10px; margin-bottom: 8px; color: var(--text-muted); }
+    .how-to-num {
+      width: 20px; height: 20px;
+      border-radius: 50%; background: rgba(212,175,55,0.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 700; color: var(--gold);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <div class="shield">🛡</div>
+      SecureID
+    </a>
+    <div class="nav-right">
+      <a href="login.html" class="btn btn-outline btn-sm">Login</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </nav>
+
+  <div class="verify-page">
+    <div class="verify-container">
+      <div class="verify-header">
+        <div class="verify-icon">🔍</div>
+        <h1>Verify <span>Identity</span></h1>
+        <p>Enter the 6-character share code provided by the individual to verify their digital identity.</p>
+      </div>
+
+      <div class="card green-accent">
+        <label class="form-label" style="text-align:center;display:block;margin-bottom:12px;">Enter Share Code</label>
+        <div class="code-input-row">
+          <input
+            type="text"
+            class="code-input"
+            id="codeInput"
+            maxlength="6"
+            placeholder="______"
+            oninput="this.value = this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter') verifyCode()"
+          />
+          <button class="btn btn-green verify-btn btn-lg" onclick="verifyCode()" id="verifyBtn">
+            <span id="verifyBtnText">Verify</span>
+            <span id="verifySpinner" style="display:none" class="spinner" style="border-color:rgba(0,200,83,0.3);border-top-color:var(--green)"></span>
+          </button>
+        </div>
+        <div style="text-align:center;margin-top:10px;font-size:0.78rem;color:rgba(255,255,255,0.2);">
+          Codes are 6 characters (first 2 letters A–Z, last 4 digits 2–9). Case insensitive.
+        </div>
+      </div>
+
+      <!-- RESULT -->
+      <div class="result-card" id="resultCard">
+        <div class="result-header">
+          <div class="result-icon" id="resultIcon">—</div>
+          <div>
+            <div class="result-title" id="resultTitle">—</div>
+            <div class="result-sub" id="resultSub">—</div>
+          </div>
+        </div>
+        <div class="result-body" id="resultBody"></div>
+        <div class="result-footer" id="resultFooter">
+          <span id="resultTimestamp">—</span>
+          <div id="resultStamp"></div>
+        </div>
+      </div>
+
+      <!-- HOW TO -->
+      <div class="how-to">
+        <div class="how-to-title">How Verification Works</div>
+        <div class="how-to-step"><div class="how-to-num">1</div><span>The identity owner logs into their SecureID dashboard and clicks "Generate Share Code".</span></div>
+        <div class="how-to-step"><div class="how-to-num">2</div><span>A unique 6-character code is created, valid for 30 minutes.</span></div>
+        <div class="how-to-step"><div class="how-to-num">3</div><span>They share the code with the verifying party (you).</span></div>
+        <div class="how-to-step"><div class="how-to-num">4</div><span>Enter the code above to instantly see the verified identity details.</span></div>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);color:rgba(255,255,255,0.2);font-size:0.78rem;">
+          ⚠ In production: codes would be encrypted, single-use, and transmitted over TLS. OTP SMS would be supported.
+        </div>
+      </div>
+
+      <div style="text-align:center;margin-top:24px;">
+        <a href="index.html" style="color:var(--text-muted);font-size:0.85rem;text-decoration:none;">← Back to SecureID Home</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Check URL for pre-filled code
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('code');
+      if (code) {
+        document.getElementById('codeInput').value = code.toUpperCase();
+        verifyCode();
+      }
+    });
+
+    function verifyCode() {
+      const code = document.getElementById('codeInput').value.trim();
+      if (!code || code.length < 3) {
+        showError('Please enter a valid share code (at least 3 characters).');
+        return;
+      }
+
+      setLoading(true);
+      // Slight delay for realism
+      setTimeout(() => {
+        const res = SecureID.verifyCode(code);
+        setLoading(false);
+
+        if (res.ok) {
+          showSuccess(res.identity, res.codeInfo, code);
+        } else {
+          showError(res.msg);
+        }
+      }, 700);
+    }
+
+    function showSuccess(identity, codeInfo, code) {
+      const card = document.getElementById('resultCard');
+      card.className = 'result-card result-success show';
+      document.getElementById('resultIcon').textContent = '✅';
+      document.getElementById('resultTitle').textContent = 'Identity Verified Successfully';
+      document.getElementById('resultSub').textContent = `Code: ${code} · Verified at ${new Date().toLocaleTimeString()}`;
+
+      document.getElementById('resultBody').innerHTML = `
+        <div class="id-row">
+          <span class="id-key">Full Name</span>
+          <span class="id-value">${identity.name}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Email</span>
+          <span class="id-value">${identity.email}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Mock ID</span>
+          <span class="id-value highlight">${identity.mockId}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Phone</span>
+          <span class="id-value">${identity.phone}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Role</span>
+          <span class="id-value">${identity.role.toUpperCase()}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Member Since</span>
+          <span class="id-value">${identity.memberSince}</span>
+        </div>
+        <div class="id-row">
+          <span class="id-key">Status</span>
+          <span class="id-value green">● Verified & Active</span>
+        </div>
+      `;
+
+      document.getElementById('resultTimestamp').textContent = `Code expires at ${codeInfo.expiresAt} · Total verifications: ${codeInfo.verifyCount}`;
+      document.getElementById('resultStamp').innerHTML = `<span class="verified-stamp">✔ Verified</span>`;
+    }
+
+    function showError(msg) {
+      const card = document.getElementById('resultCard');
+      card.className = 'result-card result-error show';
+      document.getElementById('resultIcon').textContent = '✗';
+      document.getElementById('resultTitle').textContent = 'Verification Failed';
+      document.getElementById('resultSub').textContent = new Date().toLocaleTimeString();
+      document.getElementById('resultBody').innerHTML = `
+        <div style="padding: 12px 0; color: var(--red); font-size: 0.95rem;">
+          ${msg}
+        </div>
+        <div style="color: var(--text-muted); font-size: 0.85rem; margin-top: 8px;">
+          Possible reasons: Code expired, typo in code, code was revoked, or code never existed.
+        </div>
+      `;
+      document.getElementById('resultTimestamp').textContent = 'Verification attempted at ' + new Date().toLocaleTimeString();
+      document.getElementById('resultStamp').innerHTML = `<span style="color:var(--red);font-size:0.75rem;letter-spacing:1px;">✗ UNVERIFIED</span>`;
+    }
+
+    function setLoading(on) {
+      document.getElementById('verifyBtn').disabled = on;
+      document.getElementById('verifyBtnText').style.display = on ? 'none' : 'inline';
+      document.getElementById('verifySpinner').style.display = on ? 'inline-block' : 'none';
+    }
+  </script>
+</body>
+</html>

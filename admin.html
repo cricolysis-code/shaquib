@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel – SecureID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .sidebar {
+      position: fixed; left: 0; top: 60px; bottom: 0;
+      width: 230px;
+      background: var(--black-2);
+      border-right: 1px solid var(--border);
+      z-index: 50;
+      display: flex; flex-direction: column;
+      padding: 24px 0;
+    }
+    .sidebar-section { padding: 0 16px; margin-bottom: 8px; }
+    .sidebar-label { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.2); padding: 0 12px; margin-bottom: 6px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: 5px;
+      font-size: 0.9rem; font-weight: 600; color: var(--text-muted);
+      cursor: pointer; text-decoration: none;
+      transition: all 0.2s; margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(212,175,55,0.08); color: var(--text); }
+    .nav-item.active { background: rgba(212,175,55,0.12); color: var(--gold); border-left: 2px solid var(--gold); }
+    .nav-item .icon { font-size: 17px; width: 22px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; padding: 0 16px; }
+
+    .content { margin-left: 230px; padding-top: 60px; }
+    .content-inner { padding: 32px; max-width: 1100px; }
+    .page-header { margin-bottom: 28px; display: flex; align-items: flex-start; justify-content: space-between; }
+    .page-header h1 { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; }
+    .page-header h1 span { color: var(--gold); }
+    .page-header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+
+    /* STAT CARDS */
+    .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card {
+      background: var(--black-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px 16px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card.gold::before { background: var(--gold); }
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.red::before { background: var(--red); }
+    .stat-num { font-family: 'Cinzel', serif; font-size: 2rem; font-weight: 700; }
+    .stat-card.gold .stat-num { color: var(--gold); }
+    .stat-card.green .stat-num { color: var(--green); }
+    .stat-card.red .stat-num { color: var(--red); }
+    .stat-lbl { font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+
+    /* USER TABLE */
+    .user-table-wrap {
+      background: var(--black-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .table-title { font-family: 'Cinzel', serif; font-size: 1rem; color: var(--gold); }
+    .table-search {
+      background: var(--black-3);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 4px;
+      padding: 7px 12px;
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 0.9rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .table-search:focus { border-color: var(--gold); }
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 0.7rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      border-bottom: 1px solid var(--border);
+      font-weight: 700;
+    }
+    tbody tr { border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.2s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(212,175,55,0.03); }
+    td { padding: 14px 16px; font-size: 0.9rem; }
+    .td-name { font-weight: 700; color: var(--text); }
+    .td-id { font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: var(--gold); }
+    .td-email { color: var(--text-muted); font-size: 0.85rem; }
+    .td-date { color: rgba(255,255,255,0.35); font-size: 0.8rem; }
+    .td-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* CODE TABLE */
+    .code-row { font-family: 'Share Tech Mono', monospace; }
+    .code-active { color: var(--green); }
+    .code-expired { color: rgba(255,255,255,0.2); }
+
+    /* PANEL TABS */
+    .admin-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .admin-tab {
+      padding: 12px 24px; cursor: pointer;
+      font-size: 0.9rem; font-weight: 700; letter-spacing: 1px;
+      color: var(--text-muted); border-bottom: 2px solid transparent;
+      transition: all 0.2s; text-transform: uppercase;
+    }
+    .admin-tab:hover { color: var(--text); }
+    .admin-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .admin-panel { display: none; }
+    .admin-panel.active { display: block; }
+
+    /* MODAL */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 200;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-overlay.show { display: flex; }
+    .modal {
+      background: var(--black-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 28px;
+      max-width: 480px; width: 90%;
+      position: relative;
+    }
+    .modal h3 { font-family: 'Cinzel', serif; color: var(--gold); margin-bottom: 8px; }
+    .modal p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+    .modal-close {
+      position: absolute; top: 14px; right: 14px;
+      background: none; border: none; color: var(--text-muted);
+      cursor: pointer; font-size: 20px;
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+    .system-info { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .info-item {
+      background: var(--black-3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 5px;
+      padding: 14px;
+    }
+    .info-label { font-size: 0.72rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 5px; }
+    .info-val { font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; }
+    .info-val.green { color: var(--green); }
+    .info-val.gold { color: var(--gold); }
+    .info-val.warn { color: #FFB300; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <div class="shield">🛡</div>
+      SecureID
+    </a>
+    <div class="nav-right">
+      <span class="nav-user">Admin: <span id="navAdminName">—</span></span>
+      <span class="badge badge-gold badge-dot" style="font-size:0.7rem;">Admin</span>
+      <button onclick="SecureID.logout()" class="btn btn-outline btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Admin Panel</div>
+      <a class="nav-item active" onclick="showPanel('dashboard')"><span class="icon">📊</span> Dashboard</a>
+      <a class="nav-item" onclick="showPanel('users')"><span class="icon">👥</span> Users</a>
+      <a class="nav-item" onclick="showPanel('codes')"><span class="icon">🔑</span> Share Codes</a>
+      <a class="nav-item" onclick="showPanel('system')"><span class="icon">⚙️</span> System Info</a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Tools</div>
+      <a class="nav-item" href="verify.html"><span class="icon">🔍</span> Verify</a>
+    </div>
+    <div class="sidebar-bottom">
+      <button onclick="SecureID.logout()" class="btn btn-danger btn-full btn-sm">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="content">
+    <div class="content-inner">
+      <div class="page-header">
+        <div>
+          <h1><span>Admin</span> Control Panel</h1>
+          <p>Manage users, identities, and system settings</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="refreshAll()">↻ Refresh</button>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card gold"><div class="stat-num" id="st-total">0</div><div class="stat-lbl">Total Members</div></div>
+        <div class="stat-card green"><div class="stat-num" id="st-active">0</div><div class="stat-lbl">Active Users</div></div>
+        <div class="stat-card green"><div class="stat-num" id="st-codes">0</div><div class="stat-lbl">Active Codes</div></div>
+        <div class="stat-card red"><div class="stat-num" id="st-expired">0</div><div class="stat-lbl">Expired Codes</div></div>
+        <div class="stat-card gold"><div class="stat-num" id="st-admins">0</div><div class="stat-lbl">Admins</div></div>
+      </div>
+
+      <!-- DASHBOARD PANEL -->
+      <div class="admin-panel active" id="panel-dashboard">
+        <div class="admin-tabs">
+          <div class="admin-tab active" onclick="switchTab(this, 'dt-overview')">Overview</div>
+          <div class="admin-tab" onclick="switchTab(this, 'dt-recent')">Recent Activity</div>
+        </div>
+
+        <div id="dt-overview">
+          <div class="grid-2">
+            <div class="card">
+              <div class="gold-line"></div>
+              <h3 style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:14px;">System Status</h3>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Authentication</span>
+                  <span style="color:var(--green)">● Operational</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Identity Store</span>
+                  <span style="color:var(--green)">● Operational</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Share Code Service</span>
+                  <span style="color:var(--green)">● Operational</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0">
+                  <span style="color:var(--text-muted)">Verification API</span>
+                  <span style="color:var(--green)">● Operational</span>
+                </div>
+              </div>
+            </div>
+            <div class="card green-accent">
+              <div class="gold-line" style="background:linear-gradient(90deg,var(--green),var(--gold))"></div>
+              <h3 style="font-family:'Cinzel',serif;color:var(--green);margin-bottom:14px;">Security Summary</h3>
+              <div style="display:flex;flex-direction:column;gap:10px;">
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Password Hashing</span>
+                  <span style="color:var(--gold)">bcrypt</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Code Entropy</span>
+                  <span style="color:var(--text-muted)">32-char alphabet</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05)">
+                  <span style="color:var(--text-muted)">Code TTL</span>
+                  <span style="color:var(--gold)">30 minutes</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:0.9rem;padding:8px 0">
+                  <span style="color:var(--text-muted)">Input Validation</span>
+                  <span style="color:var(--green)">✔ Active</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="dt-recent" style="display:none">
+          <div style="color:var(--text-muted);font-size:0.9rem;padding:20px;text-align:center;border:1px solid var(--border);border-radius:6px;">
+            Activity log coming soon. In production: all login attempts, code generations, and verifications would be logged here with timestamps and IP addresses.
+          </div>
+        </div>
+      </div>
+
+      <!-- USERS PANEL -->
+      <div class="admin-panel" id="panel-users">
+        <div class="alert alert-success" id="userActionAlert" style="margin-bottom:16px;"></div>
+        <div class="user-table-wrap">
+          <div class="table-header">
+            <span class="table-title">Registered Users</span>
+            <input type="text" class="table-search" placeholder="Search users..." id="userSearch" oninput="filterUsers(this.value)" />
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Mock ID</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CODES PANEL -->
+      <div class="admin-panel" id="panel-codes">
+        <div class="user-table-wrap">
+          <div class="table-header">
+            <span class="table-title">Share Codes</span>
+            <button class="btn btn-danger btn-sm" onclick="purgeExpired()">Purge Expired</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>User ID</th>
+                <th>Created</th>
+                <th>Expires</th>
+                <th>Verifications</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="codesTableBody">
+              <tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SYSTEM PANEL -->
+      <div class="admin-panel" id="panel-system">
+        <h2 style="font-family:'Cinzel',serif;font-size:1.2rem;color:var(--gold);margin-bottom:20px;">System Information</h2>
+        <div class="system-info">
+          <div class="info-item"><div class="info-label">System Version</div><div class="info-val gold">SecureID v1.0.0</div></div>
+          <div class="info-item"><div class="info-label">Build Type</div><div class="info-val warn">Prototype Demo</div></div>
+          <div class="info-item"><div class="info-label">Storage Backend</div><div class="info-val">localStorage (browser)</div></div>
+          <div class="info-item"><div class="info-label">Auth Method</div><div class="info-val green">bcrypt hash (simulated)</div></div>
+          <div class="info-item"><div class="info-label">Session Type</div><div class="info-val">sessionStorage</div></div>
+          <div class="info-item"><div class="info-label">Code Algorithm</div><div class="info-val">Math.random + charset</div></div>
+          <div class="info-item"><div class="info-label">Code TTL</div><div class="info-val green">30 minutes</div></div>
+          <div class="info-item"><div class="info-label">Input Validation</div><div class="info-val green">✔ Client-side</div></div>
+        </div>
+        <div class="card" style="margin-top:20px;">
+          <h3 style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:12px;">Production Upgrade Notes</h3>
+          <div style="font-size:0.87rem;color:var(--text-muted);line-height:2;">
+            <div>🔒 <strong style="color:var(--text)">Passwords:</strong> Replace simulated hash → Real bcrypt (Node.js: bcrypt.hash(pw, 10))</div>
+            <div>🗄️ <strong style="color:var(--text)">Database:</strong> Replace localStorage → MongoDB with encrypted fields (AES-256)</div>
+            <div>🔑 <strong style="color:var(--text)">Session:</strong> Replace sessionStorage → HttpOnly secure cookies + Redis session store</div>
+            <div>🎲 <strong style="color:var(--text)">Share Codes:</strong> Replace Math.random → crypto.randomBytes(4).toString('hex').toUpperCase()</div>
+            <div>📱 <strong style="color:var(--text)">2FA/OTP:</strong> Implement TOTP (Google Authenticator) or SMS OTP via Twilio</div>
+            <div>🚦 <strong style="color:var(--text)">Rate Limiting:</strong> Add express-rate-limit middleware (5 attempts/min)</div>
+            <div>🔍 <strong style="color:var(--text)">Audit Logging:</strong> Log all auth events, code generation, verification to persistent store</div>
+            <div>🌐 <strong style="color:var(--text)">HTTPS:</strong> All production traffic must be TLS 1.3+</div>
+          </div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px;">
+          <button class="btn btn-danger btn-sm" onclick="clearAllData()">⚠ Reset Demo Data</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- DELETE CONFIRM MODAL -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <h3>Confirm Delete</h3>
+      <p id="modalMsg">Are you sure you want to delete this user? This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-danger btn-sm" id="modalConfirmBtn" onclick="confirmDelete()">Delete User</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let allUsers = [];
+    let deleteTargetId = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const session = SecureID.requireAuth('admin');
+      if (!session) return;
+      document.getElementById('navAdminName').textContent = session.name;
+      refreshAll();
+    });
+
+    function refreshAll() {
+      const stats = SecureID.getStats();
+      document.getElementById('st-total').textContent = stats.totalUsers;
+      document.getElementById('st-active').textContent = stats.activeUsers;
+      document.getElementById('st-codes').textContent = stats.activeCodes;
+      document.getElementById('st-expired').textContent = stats.expiredCodes;
+      document.getElementById('st-admins').textContent = stats.admins;
+      loadUsers();
+      loadCodes();
+    }
+
+    function loadUsers() {
+      allUsers = SecureID.getAllUsers();
+      renderUserTable(allUsers);
+    }
+
+    function renderUserTable(users) {
+      const tbody = document.getElementById('userTableBody');
+      if (users.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No users found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td class="td-name">${u.name}</td>
+          <td class="td-email">${u.email}</td>
+          <td class="td-id">${u.mockId || '—'}</td>
+          <td><span class="badge ${u.role === 'admin' ? 'badge-gold' : 'badge-green'}">${u.role.toUpperCase()}</span></td>
+          <td><span class="badge ${u.active ? 'badge-green' : 'badge-red'}">${u.active ? '● Active' : '○ Inactive'}</span></td>
+          <td class="td-date">${new Date(u.createdAt).toLocaleDateString('en-IN')}</td>
+          <td>
+            <div class="td-actions">
+              ${u.role !== 'admin' ? `
+                <button class="btn btn-sm ${u.active ? 'btn-outline' : 'btn-green'}" onclick="toggleUser('${u.id}')">
+                  ${u.active ? 'Disable' : 'Enable'}
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="promptDelete('${u.id}', '${u.name}')">Delete</button>
+                <button class="btn btn-outline-green btn-sm" onclick="revokeUserCode('${u.id}')">Revoke Code</button>
+              ` : '<span style="color:rgba(255,255,255,0.2);font-size:0.8rem;">Protected</span>'}
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterUsers(q) {
+      const filtered = allUsers.filter(u =>
+        u.name.toLowerCase().includes(q.toLowerCase()) ||
+        u.email.toLowerCase().includes(q.toLowerCase()) ||
+        (u.mockId || '').toLowerCase().includes(q.toLowerCase())
+      );
+      renderUserTable(filtered);
+    }
+
+    function loadCodes() {
+      // Access internal storage to list codes
+      const codesRaw = localStorage.getItem('secureid_codes');
+      const codes = codesRaw ? JSON.parse(codesRaw) : {};
+      const users = SecureID.getAllUsers();
+      const userMap = {};
+      users.forEach(u => { userMap[u.id] = u.name; });
+      const tbody = document.getElementById('codesTableBody');
+      const entries = Object.entries(codes);
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">No codes generated yet</td></tr>';
+        return;
+      }
+      const now = Date.now();
+      tbody.innerHTML = entries.map(([code, data]) => {
+        const isActive = now < data.expiresAt;
+        return `
+          <tr>
+            <td class="code-row ${isActive ? 'code-active' : 'code-expired'}">${code}</td>
+            <td style="color:var(--text-muted);font-size:0.82rem;">${userMap[data.userId] || data.userId}</td>
+            <td style="color:rgba(255,255,255,0.3);font-size:0.8rem;">${new Date(data.createdAt).toLocaleTimeString()}</td>
+            <td style="color:rgba(255,255,255,0.3);font-size:0.8rem;">${new Date(data.expiresAt).toLocaleTimeString()}</td>
+            <td style="color:var(--gold);text-align:center;">${data.verifyCount || 0}</td>
+            <td><span class="badge ${isActive ? 'badge-green' : 'badge-red'}">${isActive ? 'Active' : 'Expired'}</span></td>
+            <td>
+              ${isActive ? `<button class="btn btn-danger btn-sm" onclick="adminRevokeCode('${data.userId}')">Revoke</button>` : '—'}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleUser(id) {
+      const res = SecureID.toggleUserActive(id);
+      if (res.ok) {
+        showActionAlert(`User ${res.active ? 'enabled' : 'disabled'} successfully.`);
+        refreshAll();
+      }
+    }
+
+    function promptDelete(id, name) {
+      deleteTargetId = id;
+      document.getElementById('modalMsg').textContent = `Delete user "${name}"? This will also revoke any active share codes. This cannot be undone.`;
+      document.getElementById('deleteModal').classList.add('show');
+    }
+
+    function confirmDelete() {
+      if (!deleteTargetId) return;
+      const res = SecureID.deleteUser(deleteTargetId);
+      closeModal();
+      if (res.ok) {
+        showActionAlert('User deleted successfully.');
+        refreshAll();
+      } else {
+        showActionAlert('Error: ' + res.msg, true);
+      }
+      deleteTargetId = null;
+    }
+
+    function closeModal() {
+      document.getElementById('deleteModal').classList.remove('show');
+      deleteTargetId = null;
+    }
+
+    function revokeUserCode(userId) {
+      const res = SecureID.revokeCode(userId);
+      showActionAlert(res.revoked > 0 ? 'Code revoked.' : 'No active code to revoke.');
+      refreshAll();
+    }
+
+    function adminRevokeCode(userId) {
+      SecureID.revokeCode(userId);
+      showActionAlert('Code revoked by admin.');
+      refreshAll();
+    }
+
+    function purgeExpired() {
+      const codesRaw = localStorage.getItem('secureid_codes');
+      const codes = codesRaw ? JSON.parse(codesRaw) : {};
+      const now = Date.now();
+      let purged = 0;
+      for (const code in codes) {
+        if (now >= codes[code].expiresAt) { delete codes[code]; purged++; }
+      }
+      localStorage.setItem('secureid_codes', JSON.stringify(codes));
+      showActionAlert(`Purged ${purged} expired code(s).`);
+      refreshAll();
+    }
+
+    function clearAllData() {
+      if (confirm('Reset ALL demo data? Admin account will be preserved. This removes all users and codes.')) {
+        localStorage.removeItem('secureid_users');
+        localStorage.removeItem('secureid_codes');
+        showActionAlert('Demo data reset. Reloading...');
+        setTimeout(() => location.reload(), 1200);
+      }
+    }
+
+    function showActionAlert(msg, isError) {
+      const el = document.getElementById('userActionAlert');
+      el.textContent = msg;
+      el.className = `alert ${isError ? 'alert-error' : 'alert-success'} show`;
+      setTimeout(() => el.classList.remove('show'), 3500);
+    }
+
+    function showPanel(name) {
+      document.querySelectorAll('.admin-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('panel-' + name).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick') === `showPanel('${name}')`) n.classList.add('active');
+      });
+      refreshAll();
+    }
+
+    function switchTab(btn, panelId) {
+      const parent = btn.closest('.admin-tabs');
+      parent.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+      btn.classList.add('active');
+      const panels = ['dt-overview', 'dt-recent'];
+      panels.forEach(p => {
+        const el = document.getElementById(p);
+        if (el) el.style.display = p === panelId ? 'block' : 'none';
+      });
+    }
+  </script>
+</body>
+</html>

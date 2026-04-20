@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – SecureID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .sidebar {
+      position: fixed;
+      left: 0; top: 60px; bottom: 0;
+      width: 220px;
+      background: var(--black-2);
+      border-right: 1px solid var(--border);
+      z-index: 50;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+    }
+    .sidebar-section { padding: 0 16px; margin-bottom: 8px; }
+    .sidebar-label {
+      font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase;
+      color: rgba(255,255,255,0.2); padding: 0 12px; margin-bottom: 6px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 5px;
+      font-size: 0.9rem; font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+      margin-bottom: 2px;
+    }
+    .nav-item:hover { background: rgba(212,175,55,0.08); color: var(--text); }
+    .nav-item.active { background: rgba(212,175,55,0.12); color: var(--gold); border-left: 2px solid var(--gold); }
+    .nav-item .icon { font-size: 17px; width: 22px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; padding: 0 16px; }
+
+    .content { margin-left: 220px; padding-top: 60px; }
+    .content-inner { padding: 32px; max-width: 1000px; }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-family: 'Cinzel', serif; font-size: 1.8rem; font-weight: 700; }
+    .page-header h1 span { color: var(--gold); }
+    .page-header p { color: var(--text-muted); font-size: 0.95rem; margin-top: 4px; }
+
+    /* IDENTITY CARD */
+    .id-card {
+      background: linear-gradient(135deg, #0F0F0F 0%, #161616 50%, #0A0A0A 100%);
+      border: 1px solid var(--gold);
+      border-radius: 12px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 28px;
+      box-shadow: 0 0 40px rgba(212,175,55,0.08), inset 0 1px 0 rgba(212,175,55,0.15);
+    }
+    .id-card::before {
+      content: 'SECURE ID';
+      position: absolute;
+      top: 16px; right: 20px;
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.65rem;
+      color: rgba(212,175,55,0.2);
+      letter-spacing: 3px;
+    }
+    .id-card::after {
+      content: '';
+      position: absolute;
+      bottom: -30px; right: -30px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(212,175,55,0.06), transparent 70%);
+      border-radius: 50%;
+    }
+    .id-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .id-avatar {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 28px;
+      border: 2px solid rgba(212,175,55,0.4);
+      color: var(--black);
+      font-weight: 700;
+      font-family: 'Cinzel', serif;
+    }
+    .id-shield { font-size: 32px; opacity: 0.4; }
+    .id-name { font-family: 'Cinzel', serif; font-size: 1.5rem; font-weight: 700; color: var(--gold); }
+    .id-role { font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-top: 4px; }
+    .id-fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .id-field-label { font-size: 0.65rem; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.3); margin-bottom: 4px; }
+    .id-field-val { font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: var(--text); }
+    .id-field-val.gold { color: var(--gold); font-weight: 700; }
+
+    /* SHARE CODE SECTION */
+    .share-section { }
+    .code-display {
+      background: var(--black-3);
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+      margin: 20px 0;
+      position: relative;
+    }
+    .code-display.active-code { border-color: var(--green); background: rgba(0,200,83,0.04); }
+    .code-chars {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 3rem;
+      letter-spacing: 12px;
+      color: var(--green);
+      text-shadow: 0 0 20px rgba(0,200,83,0.4);
+      margin: 8px 0;
+    }
+    .code-ttl { font-size: 0.85rem; color: var(--text-muted); margin-top: 8px; }
+    .code-ttl span { color: var(--gold); font-weight: 700; }
+    .copy-btn {
+      position: absolute;
+      top: 12px; right: 12px;
+      background: rgba(212,175,55,0.1);
+      border: 1px solid var(--border);
+      color: var(--gold);
+      border-radius: 4px;
+      padding: 5px 10px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      font-family: 'Rajdhani', sans-serif;
+      font-weight: 700;
+      transition: all 0.2s;
+    }
+    .copy-btn:hover { background: var(--gold); color: var(--black); }
+
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .tab {
+      padding: 12px 24px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+      text-transform: uppercase;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+    /* TAB PANELS */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ACTIVITY LOG */
+    .activity-list { display: flex; flex-direction: column; gap: 10px; }
+    .activity-item {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--black-2);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 5px;
+      padding: 12px 16px;
+      font-size: 0.88rem;
+    }
+    .act-icon {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: rgba(212,175,55,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .act-text { flex: 1; }
+    .act-time { color: var(--text-muted); font-size: 0.78rem; }
+
+    /* Profile edit form */
+    .profile-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .content { margin-left: 0; }
+      .id-fields { grid-template-columns: 1fr 1fr; }
+      .profile-form-grid { grid-template-columns: 1fr; }
+    }
+
+    .verify-inline {
+      background: var(--black-3);
+      border: 1px solid var(--border-green);
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .quick-verify-input {
+      display: flex; gap: 10px; align-items: center;
+    }
+    .quick-verify-input .form-input { flex: 1; font-family: 'Share Tech Mono', monospace; letter-spacing: 3px; text-transform: uppercase; }
+    .verify-result {
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 4px;
+      display: none;
+    }
+    .verify-result.show { display: block; }
+    .verify-result.success { background: rgba(0,200,83,0.08); border: 1px solid rgba(0,200,83,0.25); }
+    .verify-result.error { background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.25); }
+    .vr-field { display: flex; gap: 8px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9rem; }
+    .vr-field:last-child { border-bottom: none; }
+    .vr-label { color: var(--text-muted); min-width: 110px; font-size: 0.82rem; letter-spacing: 1px; text-transform: uppercase; }
+    .vr-val { color: var(--text); font-weight: 600; }
+    .vr-val.green { color: var(--green); }
+    .vr-val.gold { color: var(--gold); }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <a href="index.html" class="nav-logo">
+      <div class="shield">🛡</div>
+      SecureID
+    </a>
+    <div class="nav-right">
+      <span class="nav-user">Signed in as <span id="navUserName">—</span></span>
+      <span class="badge badge-green badge-dot" style="font-size:0.7rem;">Member</span>
+      <button onclick="SecureID.logout()" class="btn btn-outline btn-sm">Logout</button>
+    </div>
+  </nav>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Navigation</div>
+      <a class="nav-item active" onclick="showTab('overview')">
+        <span class="icon">🪪</span> My Identity
+      </a>
+      <a class="nav-item" onclick="showTab('share')">
+        <span class="icon">🔗</span> Share Identity
+      </a>
+      <a class="nav-item" onclick="showTab('verify')">
+        <span class="icon">✅</span> Verify Code
+      </a>
+      <a class="nav-item" onclick="showTab('profile')">
+        <span class="icon">✏️</span> Edit Profile
+      </a>
+      <a class="nav-item" onclick="showTab('security')">
+        <span class="icon">🔐</span> Security
+      </a>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Links</div>
+      <a class="nav-item" href="verify.html">
+        <span class="icon">🔍</span> Public Verify
+      </a>
+    </div>
+    <div class="sidebar-bottom">
+      <button onclick="SecureID.logout()" class="btn btn-danger btn-full btn-sm">Sign Out</button>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="content">
+    <div class="content-inner">
+      <div class="page-header">
+        <h1>Welcome, <span id="headerName">—</span></h1>
+        <p>Your secure digital identity dashboard</p>
+      </div>
+
+      <!-- OVERVIEW TAB -->
+      <div class="tab-panel active" id="tab-overview">
+        <!-- ID CARD -->
+        <div class="id-card" id="idCard">
+          <div class="id-top">
+            <div>
+              <div class="id-avatar" id="avatarInitial">?</div>
+            </div>
+            <div style="text-align:right;">
+              <div class="id-name" id="cardName">—</div>
+              <div class="id-role">Verified Member</div>
+            </div>
+            <div class="id-shield">🛡</div>
+          </div>
+          <div class="id-fields">
+            <div>
+              <div class="id-field-label">Mock ID</div>
+              <div class="id-field-val gold" id="cardMockId">—</div>
+            </div>
+            <div>
+              <div class="id-field-label">Email</div>
+              <div class="id-field-val" id="cardEmail">—</div>
+            </div>
+            <div>
+              <div class="id-field-label">Member Since</div>
+              <div class="id-field-val" id="cardSince">—</div>
+            </div>
+            <div>
+              <div class="id-field-label">Phone</div>
+              <div class="id-field-val" id="cardPhone">—</div>
+            </div>
+            <div>
+              <div class="id-field-label">Status</div>
+              <div class="id-field-val" style="color:var(--green)">● Active</div>
+            </div>
+            <div>
+              <div class="id-field-label">Role</div>
+              <div class="id-field-val" style="color:var(--gold)">MEMBER</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- QUICK STATS -->
+        <div class="grid-3" style="margin-bottom:28px;">
+          <div class="card green-accent">
+            <div style="font-size:1.8rem;font-family:'Cinzel',serif;color:var(--green)" id="statCodeStatus">NONE</div>
+            <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:4px;">Active Code</div>
+          </div>
+          <div class="card">
+            <div style="font-size:1.8rem;font-family:'Cinzel',serif;color:var(--gold)" id="statMockId">—</div>
+            <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:4px;">Mock ID</div>
+          </div>
+          <div class="card">
+            <div style="font-size:1.8rem;font-family:'Cinzel',serif;color:var(--text)" id="statJoined">—</div>
+            <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-top:4px;">Member Since</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button class="btn btn-green" onclick="showTab('share')">🔗 Generate Share Code</button>
+          <button class="btn btn-outline" onclick="showTab('profile')">✏️ Edit Profile</button>
+          <button class="btn btn-outline-green" onclick="showTab('verify')">✅ Verify a Code</button>
+        </div>
+      </div>
+
+      <!-- SHARE TAB -->
+      <div class="tab-panel" id="tab-share">
+        <h2 style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);margin-bottom:8px;">Share Your Identity</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.95rem;">Generate a secure 6-character code to share your identity. The code expires in 30 minutes.</p>
+
+        <div class="card" style="max-width:500px;">
+          <div class="alert alert-success" id="shareAlert"></div>
+          <div class="alert alert-info" id="shareInfo"></div>
+
+          <div class="code-display" id="codeBox">
+            <div style="color:var(--text-muted);font-size:0.9rem;padding:20px 0;">No active code.<br>Click below to generate one.</div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-green" onclick="generateCode()">⚡ Generate New Code</button>
+            <button class="btn btn-danger btn-sm" onclick="revokeCode()" id="revokeBtn" style="display:none">Revoke Code</button>
+          </div>
+
+          <div class="divider"></div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">
+            <strong style="color:var(--gold);">How to share:</strong><br>
+            1. Click "Generate New Code" above.<br>
+            2. Share the 6-character code with the person who needs to verify you.<br>
+            3. They visit the <a href="verify.html" style="color:var(--green);">Verify page</a> and enter the code.<br>
+            4. Code expires automatically after 30 minutes for security.<br>
+            <br>
+            <span style="color:rgba(255,255,255,0.3);">⚠ In production: AES-256 encrypted links, OTP SMS, code usage limits would apply.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- VERIFY TAB -->
+      <div class="tab-panel" id="tab-verify">
+        <h2 style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);margin-bottom:8px;">Verify an Identity</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.95rem;">Enter a 6-character code to verify someone's digital identity.</p>
+
+        <div class="card" style="max-width:520px;">
+          <div class="verify-inline">
+            <label class="form-label">Enter Share Code</label>
+            <div class="quick-verify-input">
+              <input type="text" class="form-input" id="verifyCodeInput" maxlength="6" placeholder="ABC123" />
+              <button class="btn btn-green" onclick="doVerify()">Verify</button>
+            </div>
+          </div>
+          <div class="verify-result" id="verifyResult">
+            <div id="verifyResultInner"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE TAB -->
+      <div class="tab-panel" id="tab-profile">
+        <h2 style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);margin-bottom:8px;">Edit Profile</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.95rem;">Update your identity information. Changes take effect immediately.</p>
+
+        <div class="card" style="max-width:600px;">
+          <div class="alert alert-success" id="profileAlert"></div>
+          <div class="alert alert-error" id="profileError"></div>
+          <form onsubmit="saveProfile(event)">
+            <div class="profile-form-grid">
+              <div class="form-group">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-input" id="editName" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Mock ID</label>
+                <input type="text" class="form-input" id="editMockId" />
+                <div class="form-hint">Your government / identity mock code</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" id="editEmail" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Phone</label>
+                <input type="tel" class="form-input" id="editPhone" placeholder="+91 00000 00000" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Date of Birth</label>
+                <input type="date" class="form-input" id="editDob" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-input" id="editAddress" placeholder="City, State" />
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- SECURITY TAB -->
+      <div class="tab-panel" id="tab-security">
+        <h2 style="font-family:'Cinzel',serif;font-size:1.3rem;color:var(--gold);margin-bottom:8px;">Security Settings</h2>
+        <p style="color:var(--text-muted);margin-bottom:24px;font-size:0.95rem;">Manage your account security.</p>
+
+        <div class="grid-2" style="max-width:700px;">
+          <div class="card">
+            <h3 style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:16px;">Change Password</h3>
+            <div class="alert alert-success" id="pwAlert"></div>
+            <div class="alert alert-error" id="pwError"></div>
+            <form onsubmit="changePassword(event)">
+              <div class="form-group">
+                <label class="form-label">Current Password</label>
+                <input type="password" class="form-input" id="currentPw" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">New Password</label>
+                <input type="password" class="form-input" id="newPw" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Confirm New Password</label>
+                <input type="password" class="form-input" id="confirmNewPw" required />
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Update Password</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3 style="font-family:'Cinzel',serif;color:var(--gold);margin-bottom:16px;">Security Info</h3>
+            <div style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Password Storage</div>
+                <div style="font-size:0.9rem;color:var(--green);margin-top:3px;">bcrypt hashed ✔</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Session Type</div>
+                <div style="font-size:0.9rem;color:var(--gold);margin-top:3px;">sessionStorage (prototype)</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">2FA Status</div>
+                <div style="font-size:0.9rem;color:rgba(255,200,0,0.7);margin-top:3px;">⚠ OTP-ready (simulated)</div>
+              </div>
+              <div>
+                <div style="font-size:0.75rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted)">Encryption</div>
+                <div style="font-size:0.9rem;color:rgba(255,255,255,0.4);margin-top:3px;">AES-256 in production</div>
+              </div>
+            </div>
+            <div class="divider"></div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.2);">
+              In production: implement TOTP 2FA, encrypted database fields, rate limiting, audit logs.
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    let currentUser = null;
+    let codeTimerInterval = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      const session = SecureID.requireAuth('member');
+      if (!session) return;
+      currentUser = SecureID.getProfile(session.userId);
+      renderProfile();
+      loadActiveCode();
+    });
+
+    function renderProfile() {
+      const u = currentUser;
+      if (!u) return;
+      document.getElementById('navUserName').textContent = u.name;
+      document.getElementById('headerName').textContent = u.name.split(' ')[0];
+      document.getElementById('avatarInitial').textContent = u.name.charAt(0).toUpperCase();
+      document.getElementById('cardName').textContent = u.name;
+      document.getElementById('cardEmail').textContent = u.email;
+      document.getElementById('cardMockId').textContent = u.mockId || '—';
+      document.getElementById('cardPhone').textContent = u.phone || 'Not set';
+      document.getElementById('cardSince').textContent = new Date(u.createdAt).toLocaleDateString('en-IN', { year:'numeric', month:'short', day:'numeric' });
+      document.getElementById('statMockId').textContent = u.mockId || '—';
+      document.getElementById('statJoined').textContent = new Date(u.createdAt).toLocaleDateString('en-IN', { month:'short', year:'numeric' });
+
+      // Fill edit form
+      document.getElementById('editName').value = u.name || '';
+      document.getElementById('editMockId').value = u.mockId || '';
+      document.getElementById('editEmail').value = u.email || '';
+      document.getElementById('editPhone').value = u.phone || '';
+      document.getElementById('editDob').value = u.dob || '';
+      document.getElementById('editAddress').value = u.address || '';
+    }
+
+    function loadActiveCode() {
+      const activeCode = SecureID.getUserActiveCode(currentUser.id);
+      if (activeCode) {
+        renderCode(activeCode.code, activeCode.expiresAt);
+      } else {
+        document.getElementById('statCodeStatus').textContent = 'NONE';
+      }
+    }
+
+    function renderCode(code, expiresAt) {
+      const box = document.getElementById('codeBox');
+      box.className = 'code-display active-code';
+      box.innerHTML = `
+        <div style="font-size:0.75rem;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted)">Active Share Code</div>
+        <div class="code-chars">${code}</div>
+        <div class="code-ttl">Expires in: <span id="codeCountdown">—</span></div>
+        <button class="copy-btn" onclick="copyCode('${code}')">Copy</button>
+      `;
+      document.getElementById('revokeBtn').style.display = 'inline-flex';
+      document.getElementById('statCodeStatus').textContent = code;
+      document.getElementById('statCodeStatus').style.color = 'var(--green)';
+
+      if (codeTimerInterval) clearInterval(codeTimerInterval);
+      codeTimerInterval = setInterval(() => {
+        const el = document.getElementById('codeCountdown');
+        if (el) {
+          const remaining = SecureID.formatTime(expiresAt);
+          el.textContent = remaining;
+          if (remaining === 'Expired') {
+            clearInterval(codeTimerInterval);
+            loadActiveCode();
+          }
+        }
+      }, 1000);
+    }
+
+    function generateCode() {
+      const result = SecureID.createShareCode(currentUser.id);
+      if (result.ok) {
+        const activeCode = SecureID.getUserActiveCode(currentUser.id);
+        renderCode(result.code, activeCode.expiresAt);
+        const al = document.getElementById('shareAlert');
+        al.textContent = '✔ New share code generated! Share it with who needs to verify you.';
+        al.classList.add('show');
+        setTimeout(() => al.classList.remove('show'), 4000);
+      }
+    }
+
+    function revokeCode() {
+      SecureID.revokeCode(currentUser.id);
+      const box = document.getElementById('codeBox');
+      box.className = 'code-display';
+      box.innerHTML = '<div style="color:var(--text-muted);font-size:0.9rem;padding:20px 0;">Code revoked. Generate a new one.</div>';
+      document.getElementById('revokeBtn').style.display = 'none';
+      document.getElementById('statCodeStatus').textContent = 'NONE';
+      document.getElementById('statCodeStatus').style.color = 'var(--text-muted)';
+      if (codeTimerInterval) clearInterval(codeTimerInterval);
+      const al = document.getElementById('shareInfo');
+      al.textContent = 'Code revoked successfully.';
+      al.classList.add('show');
+      setTimeout(() => al.classList.remove('show'), 3000);
+    }
+
+    function copyCode(code) {
+      navigator.clipboard.writeText(code).then(() => {
+        const al = document.getElementById('shareAlert');
+        al.textContent = '✔ Code "' + code + '" copied to clipboard!';
+        al.classList.add('show');
+        setTimeout(() => al.classList.remove('show'), 2500);
+      });
+    }
+
+    function doVerify() {
+      const code = document.getElementById('verifyCodeInput').value.trim();
+      const result = document.getElementById('verifyResult');
+      const inner = document.getElementById('verifyResultInner');
+
+      if (!code || code.length < 3) {
+        result.className = 'verify-result error show';
+        inner.innerHTML = '<span style="color:var(--red);">✗ Please enter a valid code.</span>';
+        return;
+      }
+
+      const res = SecureID.verifyCode(code);
+      result.classList.add('show');
+      if (res.ok) {
+        result.className = 'verify-result success show';
+        const id = res.identity;
+        inner.innerHTML = `
+          <div style="color:var(--green);font-weight:700;margin-bottom:12px;font-family:'Cinzel',serif;">✔ Identity Verified</div>
+          <div class="vr-field"><span class="vr-label">Name</span><span class="vr-val">${id.name}</span></div>
+          <div class="vr-field"><span class="vr-label">Email</span><span class="vr-val">${id.email}</span></div>
+          <div class="vr-field"><span class="vr-label">Mock ID</span><span class="vr-val gold">${id.mockId}</span></div>
+          <div class="vr-field"><span class="vr-label">Phone</span><span class="vr-val">${id.phone}</span></div>
+          <div class="vr-field"><span class="vr-label">Role</span><span class="vr-val">${id.role.toUpperCase()}</span></div>
+          <div class="vr-field"><span class="vr-label">Member Since</span><span class="vr-val">${id.memberSince}</span></div>
+          <div class="vr-field"><span class="vr-label">Verifications</span><span class="vr-val green">${res.codeInfo.verifyCount} total</span></div>
+        `;
+      } else {
+        result.className = 'verify-result error show';
+        inner.innerHTML = `<span style="color:var(--red);">✗ ${res.msg}</span>`;
+      }
+    }
+
+    function saveProfile(e) {
+      e.preventDefault();
+      const updates = {
+        name: document.getElementById('editName').value.trim(),
+        mockId: document.getElementById('editMockId').value.trim(),
+        email: document.getElementById('editEmail').value.trim(),
+        phone: document.getElementById('editPhone').value.trim(),
+        dob: document.getElementById('editDob').value,
+        address: document.getElementById('editAddress').value.trim()
+      };
+      const res = SecureID.updateProfile(currentUser.id, updates);
+      if (res.ok) {
+        currentUser = SecureID.getProfile(currentUser.id);
+        renderProfile();
+        const al = document.getElementById('profileAlert');
+        al.textContent = '✔ Profile updated successfully!';
+        al.classList.add('show');
+        setTimeout(() => al.classList.remove('show'), 3000);
+      } else {
+        const el = document.getElementById('profileError');
+        el.textContent = res.msg;
+        el.classList.add('show');
+      }
+    }
+
+    function changePassword(e) {
+      e.preventDefault();
+      const curr = document.getElementById('currentPw').value;
+      const newPw = document.getElementById('newPw').value;
+      const conf = document.getElementById('confirmNewPw').value;
+      if (newPw !== conf) {
+        const el = document.getElementById('pwError');
+        el.textContent = 'New passwords do not match.';
+        el.classList.add('show');
+        return;
+      }
+      const res = SecureID.changePassword(currentUser.id, curr, newPw);
+      if (res.ok) {
+        const al = document.getElementById('pwAlert');
+        al.textContent = '✔ Password changed successfully!';
+        al.classList.add('show');
+        document.getElementById('currentPw').value = '';
+        document.getElementById('newPw').value = '';
+        document.getElementById('confirmNewPw').value = '';
+        setTimeout(() => al.classList.remove('show'), 3000);
+      } else {
+        const el = document.getElementById('pwError');
+        el.textContent = res.msg;
+        el.classList.add('show');
+        setTimeout(() => el.classList.remove('show'), 3000);
+      }
+    }
+
+    function showTab(name) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      // Mark active nav
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick') === `showTab('${name}')`) n.classList.add('active');
+      });
+    }
+  </script>
+</body>
+</html>

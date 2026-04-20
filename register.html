@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – SecureID</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .auth-page {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; align-items: stretch;
+    }
+    .auth-left {
+      flex: 0 0 340px;
+      background: linear-gradient(160deg, rgba(0,200,83,0.05) 0%, rgba(212,175,55,0.03) 100%);
+      border-right: 1px solid var(--border);
+      padding: 60px 36px;
+      display: flex; flex-direction: column; justify-content: space-between;
+    }
+    .auth-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .shield-lg {
+      width: 44px; height: 44px;
+      background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      display: flex; align-items: center; justify-content: center; font-size: 20px;
+    }
+    .auth-brand-text { font-family: 'Cinzel', serif; font-size: 1.3rem; font-weight: 700; color: var(--gold); letter-spacing: 2px; }
+    .auth-brand-sub { font-size: 0.7rem; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); }
+    .steps-list { display: flex; flex-direction: column; gap: 20px; }
+    .reg-step { display: flex; gap: 14px; align-items: flex-start; }
+    .reg-step-num {
+      width: 28px; height: 28px; flex-shrink: 0;
+      background: rgba(212,175,55,0.15);
+      border: 1px solid rgba(212,175,55,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem; font-weight: 700; color: var(--gold);
+    }
+    .reg-step h4 { font-size: 0.9rem; color: var(--text); margin-bottom: 3px; }
+    .reg-step p { font-size: 0.8rem; color: var(--text-muted); }
+    .auth-left-footer { font-size: 0.75rem; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
+    .auth-right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 32px; }
+    .auth-box { width: 100%; max-width: 480px; }
+    .auth-box-header { margin-bottom: 28px; }
+    .auth-box-header h2 { font-family: 'Cinzel', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 6px; }
+    .auth-box-header h2 span { color: var(--green); }
+    .auth-box-header p { color: var(--text-muted); font-size: 0.92rem; }
+
+    /* Password strength */
+    .pw-strength { margin-top: 8px; }
+    .pw-bar-wrap {
+      height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin-bottom: 5px;
+    }
+    .pw-bar { height: 100%; width: 0%; border-radius: 2px; transition: all 0.3s; }
+    .pw-label { font-size: 0.75rem; color: var(--text-muted); }
+    .pw-reqs { margin-top: 8px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .pw-req { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+    .pw-req.met { color: var(--green); }
+    .pw-req-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .input-wrap { position: relative; }
+    .input-wrap .form-input { padding-right: 44px; }
+    .input-toggle {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 16px; padding: 0;
+    }
+    .terms-check { display: flex; align-items: flex-start; gap: 10px; font-size: 0.85rem; color: var(--text-muted); }
+    .terms-check input[type="checkbox"] { margin-top: 3px; accent-color: var(--green); }
+    .terms-check a { color: var(--gold); text-decoration: none; }
+    .auth-footer { text-align: center; margin-top: 20px; font-size: 0.88rem; color: var(--text-muted); }
+    .auth-footer a { color: var(--gold); text-decoration: none; font-weight: 700; }
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(0,200,83,0.3); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (max-width: 768px) {
+      .auth-left { display: none; }
+      .two-col { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-page">
+  <!-- LEFT -->
+  <div class="auth-left">
+    <a href="index.html" class="auth-brand">
+      <div class="shield-lg">🛡</div>
+      <div>
+        <div class="auth-brand-text">SecureID</div>
+        <div class="auth-brand-sub">Digital Identity System</div>
+      </div>
+    </a>
+    <div>
+      <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:24px;text-transform:uppercase;letter-spacing:2px;">What happens after registration</p>
+      <div class="steps-list">
+        <div class="reg-step">
+          <div class="reg-step-num">1</div>
+          <div>
+            <h4>Account Created</h4>
+            <p>Your password is hashed with bcrypt and stored securely.</p>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-num">2</div>
+          <div>
+            <h4>Mock ID Assigned</h4>
+            <p>A unique ID is generated for your digital identity record.</p>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-num">3</div>
+          <div>
+            <h4>Dashboard Access</h4>
+            <p>You can update profile, generate share codes, and verify identities.</p>
+          </div>
+        </div>
+        <div class="reg-step">
+          <div class="reg-step-num">4</div>
+          <div>
+            <h4>Identity Sharing</h4>
+            <p>Generate a 6-character code to share your identity safely.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="auth-left-footer">SecureID © 2025 · Prototype Demo</div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="auth-right">
+    <div class="auth-box">
+      <div class="auth-box-header">
+        <div class="gold-line"></div>
+        <h2>Create <span>Your Account</span></h2>
+        <p>Register as a new member to get your digital identity.</p>
+      </div>
+
+      <div class="alert alert-error" id="regAlert"></div>
+      <div class="alert alert-success" id="regSuccess"></div>
+
+      <form id="registerForm" onsubmit="handleRegister(event)">
+        <div class="two-col">
+          <div class="form-group">
+            <label class="form-label">First Name</label>
+            <input type="text" class="form-input" id="firstName" placeholder="John" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Last Name</label>
+            <input type="text" class="form-input" id="lastName" placeholder="Doe" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <input type="email" class="form-input" id="regEmail" placeholder="john@example.com" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Phone Number <span style="color:var(--text-muted);font-size:0.75rem;">(Optional)</span></label>
+          <input type="tel" class="form-input" id="regPhone" placeholder="+91 00000 00000" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="regPassword" placeholder="Min. 8 chars" required oninput="checkStrength(this.value)" />
+            <button type="button" class="input-toggle" onclick="togglePw('regPassword', this)">👁</button>
+          </div>
+          <div class="pw-strength">
+            <div class="pw-bar-wrap"><div class="pw-bar" id="pwBar"></div></div>
+            <div class="pw-label" id="pwLabel">Enter a strong password</div>
+            <div class="pw-reqs">
+              <div class="pw-req" id="req-len"><span class="pw-req-dot"></span> 8+ characters</div>
+              <div class="pw-req" id="req-upper"><span class="pw-req-dot"></span> Uppercase letter</div>
+              <div class="pw-req" id="req-num"><span class="pw-req-dot"></span> Number</div>
+              <div class="pw-req" id="req-special"><span class="pw-req-dot"></span> Special character</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Confirm Password</label>
+          <div class="input-wrap">
+            <input type="password" class="form-input" id="regConfirm" placeholder="Repeat password" required />
+            <button type="button" class="input-toggle" onclick="togglePw('regConfirm', this)">👁</button>
+          </div>
+          <div class="form-error" id="confirmError">Passwords do not match</div>
+        </div>
+
+        <div class="form-group">
+          <div class="terms-check">
+            <input type="checkbox" id="termsCheck" required />
+            <label for="termsCheck">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. I understand this is a prototype demo.</label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-green btn-full btn-lg" id="regBtn">
+          <span id="regBtnText">Create Account</span>
+          <span id="regSpinner" style="display:none" class="spinner"></span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="login.html">Sign in here</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+  // Redirect if already logged in
+  window.addEventListener('DOMContentLoaded', () => {
+    const session = SecureID.getSession();
+    if (session) window.location.href = session.role === 'admin' ? 'admin.html' : 'dashboard.html';
+  });
+
+  function checkStrength(pw) {
+    const bar = document.getElementById('pwBar');
+    const label = document.getElementById('pwLabel');
+    const reqs = {
+      'req-len': pw.length >= 8,
+      'req-upper': /[A-Z]/.test(pw),
+      'req-num': /[0-9]/.test(pw),
+      'req-special': /[^A-Za-z0-9]/.test(pw)
+    };
+    const met = Object.values(reqs).filter(Boolean).length;
+    for (const [id, ok] of Object.entries(reqs)) {
+      document.getElementById(id).classList.toggle('met', ok);
+    }
+    const colors = ['', '#FF4444', '#FF8800', '#FFB300', '#00C853'];
+    const labels = ['', 'Very Weak', 'Weak', 'Fair', 'Strong'];
+    bar.style.width = (met * 25) + '%';
+    bar.style.background = colors[met] || '#444';
+    label.textContent = labels[met] || '';
+    label.style.color = colors[met] || 'var(--text-muted)';
+  }
+
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  function handleRegister(e) {
+    e.preventDefault();
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const phone = document.getElementById('regPhone').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regConfirm').value;
+    const errEl = document.getElementById('confirmError');
+
+    if (password !== confirm) {
+      errEl.style.display = 'block';
+      return;
+    }
+    errEl.style.display = 'none';
+
+    setLoading(true);
+    setTimeout(() => {
+      const result = SecureID.register({ name: firstName + ' ' + lastName, email, password });
+      // Add phone if provided
+      if (result.ok && phone) {
+        SecureID.updateProfile(result.user.id, { phone });
+      }
+      setLoading(false);
+      if (result.ok) {
+        document.getElementById('regAlert').classList.remove('show');
+        const succ = document.getElementById('regSuccess');
+        succ.textContent = '✔ Account created successfully! Redirecting to login...';
+        succ.classList.add('show');
+        document.getElementById('registerForm').style.opacity = '0.4';
+        setTimeout(() => { window.location.href = 'login.html?role=member'; }, 1800);
+      } else {
+        const el = document.getElementById('regAlert');
+        el.textContent = result.msg;
+        el.classList.add('show');
+      }
+    }, 900);
+  }
+
+  function setLoading(on) {
+    document.getElementById('regBtn').disabled = on;
+    document.getElementById('regBtnText').style.display = on ? 'none' : 'inline';
+    document.getElementById('regSpinner').style.display = on ? 'inline-block' : 'none';
+  }
+</script>
+</body>
+</html>
